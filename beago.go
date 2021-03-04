@@ -1,4 +1,24 @@
-package main
+// Beago is a simple command-line application for querying artist album rankings on BestEverAlbums.
+// Usage:
+//
+//	  beago [options] [artist name or ID]
+//
+// Running without options returns the ranking for the first artist found. The flags are:
+//
+//	  -s
+//			returns up to ten search results with associated artist IDs
+//	  -c
+//			get album results by ID
+//	  -p=1
+//			shows the requested album page
+//
+// Examples:
+//
+// beago -s the fall
+// beago -p=2 the fall
+// beago -c 1351
+//
+package beago
 
 import (
 	"flag"
@@ -33,11 +53,11 @@ func processSearchPage(query string, lucky bool) string {
 	htmlUnprocessed := stringifyPage(query, "search")
 
 	if lucky {
-		first := strings.SplitAfterN(htmlUnprocessed, "title=\"Click to see further details regarding this artist\" href=\"/thechart.php?b=", 2)
+		first := strings.SplitN(htmlUnprocessed, "title=\"Click to see further details regarding this artist\" href=\"/thechart.php?b=", 2)
 		return strings.SplitN(first[1], "\"", 2)[0]
 	}
 
-	divide := strings.SplitAfter(htmlUnprocessed, "title=\"Click to see further details regarding this artist\" href=\"/thechart.php?b=")
+	divide := strings.Split(htmlUnprocessed, "title=\"Click to see further details regarding this artist\" href=\"/thechart.php?b=")
 	n := len(divide)
 
 	results := make([]string, n, n)
@@ -53,11 +73,11 @@ func processSearchPage(query string, lucky bool) string {
 func processArtistPage(artistID string, pageNum int) string {
 	url := fmt.Sprintf("https://www.besteveralbums.com/thechart.php?b=%v&f=&fv=&orderby=InfoRankScore&sortdir=DESC&page=%v", artistID, pageNum)
 	htmlUnprocessed := stringifyPage(url, "artist")
-	divide := strings.SplitAfter(htmlUnprocessed, "title=\"Click to see further details regarding this album.\">")
+	divide := strings.Split(htmlUnprocessed, "title=\"Click to see further details regarding this album.\">")
 	n := len(divide)
 
 	topAlbums := make([]string, n, n)
-	navInfo := strings.SplitAfterN(divide[n-1], "<span class=\"current\">T", 2)[1]
+	navInfo := strings.SplitN(divide[n-1], "<span class=\"current\">T", 2)[1]
 	topAlbums[0] = "T" + strings.SplitN(navInfo, "<", 2)[0]
 
 	for i, ss := range divide[1:] {
